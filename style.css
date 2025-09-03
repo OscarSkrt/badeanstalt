@@ -1,0 +1,225 @@
+/* Generelt */
+body {
+  margin:0;
+  font-family: 'Arial', sans-serif;
+  background: linear-gradient(to bottom, #e6f2ff, #ffffff);
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+  color:#003366;
+}
+
+header {
+  padding:12px 16px;
+  background:#003366;
+  color:#cce6ff;
+  font-size:1.3rem;
+  font-weight:bold;
+  box-shadow:0 2px 6px rgba(0,0,0,0.2);
+}
+
+.layout {
+  display:flex;
+  flex:1;
+  overflow:hidden;
+}
+
+/* Venstre sidebar */
+.sidebar-left {
+  width:220px;
+  background:#003366;
+  color:white;
+  padding:10px;
+  box-shadow:2px 0 5px rgba(0,0,0,0.2);
+  overflow-y:auto;
+  border-radius:0 10px 10px 0;
+}
+
+.sidebar-left h2 {
+  font-size:16px;
+  color:#cce6ff;
+  margin-top:0;
+  margin-bottom:8px;
+}
+
+.filter-btn {
+  cursor:pointer;
+  border:none;
+  border-radius:8px;
+  margin:4px 2px;
+  padding:6px 10px;
+  background:#0059b3;
+  color:white;
+  font-size:14px;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.filter-btn:hover {
+  background:#0073e6;
+  transform:scale(1.05);
+}
+
+.filter-btn.active {
+  background:#3399ff;
+  font-weight:bold;
+}
+
+/* Kort */
+#map {
+  flex:1;
+  border-radius:10px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.2);
+  margin:8px;
+}
+
+/* Højre sidebar */
+.sidebar-right {
+  width:280px;
+  background:white;
+  padding:12px;
+  box-shadow:-2px 0 5px rgba(0,0,0,0.2);
+  overflow-y:auto;
+  border-radius:10px 0 0 10px;
+}
+
+/* Hjertet */
+#like-btn {
+  text-align:center;
+  font-size:36px;
+  cursor:pointer;
+  color:red;
+  margin-bottom:12px;
+  transition: transform 0.2s;
+}
+
+#like-btn:hover {
+  transform:scale(1.2);
+}
+
+/* Billeder */
+.sidebar-right .gallery img {
+  width:100%;
+  margin-bottom:6px;
+  cursor:pointer;
+  border-radius:8px;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.sidebar-right .gallery img:hover {
+  transform: scale(1.08);
+  box-shadow:0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* Beskrivelse */
+.description-box {
+  background:#f0f8ff;
+  border:1px solid #99ccff;
+  border-radius:8px;
+  padding:0.7rem;
+  margin-top:1rem;
+  box-shadow:0 1px 4px rgba(0,0,0,0.1);
+}
+
+/* Temperatur label ved markør */
+.temp-label {
+  background:white;
+  padding:5px 6px;
+  min-width:28px;
+  text-align:center;
+  border-radius:6px;
+  border:1px solid #003366;
+  font-size:12px;
+  color:#003366;
+  line-height:18px;
+  box-shadow:0 1px 4px rgba(0,0,0,0.1);
+}
+
+/* Travlhed og dag-/time-bar */
+.day-bar, #hoursContainer div {
+  padding:4px 6px;
+  border-radius:4px;
+  margin-bottom:3px;
+  background:#f5f5f5;
+  display:flex;
+  justify-content:space-between;
+  font-size:13px;
+}
+
+.day-bar:hover {
+  background:#e0f0ff;
+  cursor:pointer;
+}
+
+/* Aktuel travlhed fremhævet */
+#hoursContainer p:first-child {
+  font-weight:bold;
+  color:#003366;
+  background:#d0e6ff;
+  padding:6px;
+  border-radius:5px;
+  margin-bottom:8px;
+}
+
+/* Faner øverst */
+.tab-btn {
+  cursor: pointer;
+  border: none;
+  border-radius: 5px 5px 0 0;
+  margin-right: 5px;
+  padding: 8px 16px;
+  background: #0059b3;
+  color: white;
+  font-size: 14px;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.tab-btn:hover {
+  background: #0073e6;
+  transform: translateY(-2px);
+}
+
+.tab-btn.active {
+  background: #3399ff;
+  font-weight: bold;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Pop animation på like-knap */
+#like-btn.pop {
+  animation: pop 0.3s forwards;
+}
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.5); }
+  100% { transform: scale(1); }
+}
+
+/* Fade-in højre sidebar */
+.sidebar-right.fade-in {
+  animation: fadeIn 0.4s ease-in-out;
+}
+@keyframes fadeIn {
+  0% { opacity:0; transform: translateY(10px); }
+  100% { opacity:1; transform: translateY(0); }
+}
+
+/* Puls på markør (kun fyldet, ikke marker) */
+.pulse-circle {
+  animation: pulseCircle 2s infinite;
+}
+@keyframes pulseCircle {
+  0% { opacity:0.6; r:10; }
+  50% { opacity:0.3; r:16; }
+  100% { opacity:0.6; r:10; }
+}
+
+/* Mobilvenlig */
+@media screen and (max-width:600px){
+  .sidebar-left {width:140px; padding:6px;}
+  .filter-btn {font-size:12px; padding:4px; margin:2px;}
+  .sidebar-right {width:200px; padding:8px;}
+  .temp-label {min-width:26px; padding:2px 4px; line-height:16px;}
+  header {font-size:1rem; padding:8px;}
+  #map {margin:4px;}
+  #like-btn {font-size:28px;}
+}

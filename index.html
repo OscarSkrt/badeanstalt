@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<title>Badeanstalter i Danmark</title>
+<link rel="stylesheet" href="style.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+<body>
+<header>Velkommen til Badeanstalter i Danmark</header>
+<div class="layout">
+  <!-- Venstre sidebar med faner -->
+  <div class="sidebar-left">
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="filters">Filtre</button>
+      <button class="tab-btn" data-tab="liked">Mine bad</button>
+    </div>
+    
+   <!-- Filtre sektion i venstre sidebar -->
+<div class="tab-content" id="filters">
+  <p><b>Miljø:</b></p>
+  <button class="filter-btn group" data-group="type" data-value="urban">By</button>
+  <button class="filter-btn group" data-group="type" data-value="nature">Natur</button>
+
+  <p><b>Vippe:</b></p>
+  <button class="filter-btn group" data-group="diving" data-value="true">Med vippe</button>
+  <button class="filter-btn group" data-group="diving" data-value="false">Uden vippe</button>
+
+  <p><b>Livredder:</b></p>
+  <button class="filter-btn group" data-group="lifeguard" data-value="true">Ja</button>
+  <button class="filter-btn group" data-group="lifeguard" data-value="false">Nej</button>
+
+  <p><b>Toilet:</b></p>
+  <button class="filter-btn group" data-group="toilet" data-value="true">Ja</button>
+  <button class="filter-btn group" data-group="toilet" data-value="false">Nej</button>
+
+  <p><b>Omklædningslokaler:</b></p>
+  <button class="filter-btn group" data-group="changingRoom" data-value="true">Ja</button>
+  <button class="filter-btn group" data-group="changingRoom" data-value="false">Nej</button>
+
+  <p><b>Pris:</b></p>
+  <button class="filter-btn group" data-group="price" data-value="gratis">Gratis</button>
+  <button class="filter-btn group" data-group="price" data-value="betalt">Betalt</button>
+</div>
+
+    <!-- Mine likede sektion -->
+    <div class="tab-content" id="liked" style="display:none;">
+      <h2>Mine likede</h2>
+      <ul id="likedList" style="list-style:none; padding-left:0;"></ul>
+    </div>
+  </div>
+
+  <!-- Kort -->
+  <div id="map"></div>
+
+  <!-- Højre sidebar -->
+  <div class="sidebar-right" id="infoSidebar">
+    <p>Vælg en badeanstalt for at se info</p>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+// --- Kort og badeanstalter ---
+const map = L.map('map').setView([55.7,12.57],11);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap'}).addTo(map);
+
+const spots = [
+  {navn:"Amager Strand", coords:[55.654796200621, 12.648618535883232], temp:"19°C", vand:"God", type:"urban", diving:true, lifeguard:true, toilet:true, changingRoom:true, pris:"gratis", beskrivelse:"Populær strand med både sand og græsarealer.", billeder:["https://lh3.googleusercontent.com/gps-cs-s/AC9h4nogVBhjCbf5lYEKW1bzPAFwWfXeUtsodsWO0YtvKCwzu74K5NQGBp6sKtmS1JBn4o-61XR9548u2SBv54CSlrTvNND5dNoZUkh-7svGC7Ulqjf8blIQFoez8WXmp0KTuORRViKAAw=w408-h306-k-no"], tripAdvisor:"#", googleMaps:"#"},
+  {navn:"Bellevue Strand", coords:[55.77878498952954, 12.592510095142229], temp:"20°C", vand:"God", type:"nature", diving:false, lifeguard:true, toilet:true, changingRoom:true, pris:"betalt", beskrivelse:"Historisk strand med fine faciliteter.", billeder:["https://lh3.googleusercontent.com/gps-cs-s/AC9h4nrGwpMmN630w6lL0jG8Xm345hEaZNqB1sbDvSciJkfABmryw8LVN7VJzBt5wbSwHpPUgct_tF5r1qgqRJQPrQDtOHawtFzI3ZOl31PSUiN2Vin8fKaTZD3XhGfJlYmqyPAdhghN=w408-h306-k-no"], tripAdvisor:"#", googleMaps:"#"},
+  {navn:"Furesøbad", coords:[55.80288440308438, 12.386385509238737], temp:"19°C", vand:"God", type:"nature", diving:true, lifeguard:false, toilet:false, changingRoom:false, pris:"gratis", beskrivelse:"Naturskøn strand ved Furesøen.", billeder:["https://lh3.googleusercontent.com/gps-cs-s/AC9h4nobz-1cfeJ6rWNIoIhwXeLQQqlPikXGtW_7ImeNKkeNyJMQ_Nz6UvvZfkXWMCTaCF75Xw3K6OlgAE6EuNJRWymZpwxB6DEqqUSC_FUSwasoVh0nmLSJvI8UQAN0pN3GVj_QXZON-rYwf2D-=w408-h544-k-no"], tripAdvisor:"#", googleMaps:"#"},
+  {navn:"Svanemølle Strand", coords:[55.71990017406533, 12.583677455939537], temp:"21°C", vand:"God", type:"urban", diving:true, lifeguard:true, toilet:true, changingRoom:true, pris:"gratis", beskrivelse:"Strand tæt på byen med gode faciliteter.", billeder:["https://lh3.googleusercontent.com/gps-cs-s/AC9h4nqnNrAaYW0cdkmeMYWN3BjbWh6oTYn5QUtZ80St1QESnpJF_h56n_nk-6NzlkhpRDnvH48jmFbiK-yGoODREZ-AbUc5zN_eeoXXb4Rzs8Ekniw6eeg4qzXNrd7xL38GderiVZMw6Q=w426-h240-k-no"], tripAdvisor:"#", googleMaps:"#"},
+  {navn:"Hellerup Strand", coords:[55.732735341544355, 12.582199025476811], temp:"20°C", vand:"God", type:"urban", diving:false, lifeguard:true, toilet:true, changingRoom:true, pris:"betalt", beskrivelse:"Strand med dejlige badebroer.", billeder:["https://lh3.googleusercontent.com/gps-cs-s/AC9h4nqaZnojPU5f7yJoDCR6-LBkO952zGjrDbzh9UH46Pfo9SDY38DwDMLBxcMs8Zr0-oF69XkF4YExfCyZMFAhbx5zzlNj5ofOgw-780YaARfmPzkHCCLBgkZ3Fk-qY0-5ye6KO4HdKg=w408-h306-k-no"], tripAdvisor:"#", googleMaps:"#"},
+  {navn:"Kastrup Søbad", coords:[55.641245890900244, 12.650981038222868], temp:"19°C", vand:"Dårlig", type:"urban", diving:false, lifeguard:false, toilet:true, changingRoom:false, pris:"gratis", beskrivelse:"Mindre søbad med smuk udsigt.", billeder:["https://lh3.googleusercontent.com/gps-cs-s/AC9h4no-2ccipxp7THp6f0hWIJR-tPOReaCm4bM7620x17uWqttDwpt38YccfKQgDEsBVWaKE7fszQBWoSsxljNankNfEPZ6E0KJWOPNaS_OhdHKlfKO4taUt8bN-kYuTskCP-awFFzJ=w426-h240-k-no"], tripAdvisor:"#", googleMaps:"#"},
+  {navn:"Dragør Strand", coords:[55.587524386301375, 12.674141369701285], temp:"21°C", vand:"God", type:"nature", diving:true, lifeguard:true, toilet:true, changingRoom:true, pris:"gratis", beskrivelse:"Strand med gode parkeringsmuligheder.", billeder:["https://lh3.googleusercontent.com/gps-cs-s/AC9h4npqcLOPexvPlEAOEQenEWOkKlpV_mMGlWmrmx7IuMlHBPWj80d9nw7WayA9n_6kfML1be-OmF7rAgRDbGoQTIBS3pQE58onOufaFCWN3WOrxG75rRqtUmyZPSz_QFYhTAmuUaEE=w408-h306-k-no"], tripAdvisor:"#", googleMaps:"#"},
+  {navn:"Charlottenlund Strand", coords:[55.746875555710865, 12.589537893311359], temp:"20°C", vand:"God", type:"nature", diving:true, lifeguard:true, toilet:true, changingRoom:true, pris:"gratis", beskrivelse:"Rolig strand i grønne omgivelser.", billeder:["https://lh3.googleusercontent.com/gps-cs-s/AC9h4npK_BhbNhe_GaMDSHMzVE_tQ0lQphNgMXsyhH6C-NmsmqhYgluP7NUOROIZ0tt0DKY7qG-vGvdSIstYDsEjzyR8iK-PjMpyezpY-TmoM3IfdaRsWEVhrLoRGyCFDO5jbuHOEFuN=w426-h240-k-no"], tripAdvisor:"#", googleMaps:"#"},
+  {navn:"Vedbæk Strand", coords:[55.85137413376791, 12.569846051176466], temp:"19°C", vand:"God", type:"urban", diving:false, lifeguard:false, toilet:true, changingRoom:false, pris:"gratis", beskrivelse:"Naturskøn strand med gode vandkvalitet.", billeder:["https://lh3.googleusercontent.com/gps-cs-s/AC9h4np2iVSj3lQ2MXF90Vkr9lGlefKNkRuqoqqguOCAbFfYAPF1LPkvZ3wSzIQGxkkjBpJ2ejvPzVTtwYfI-Q8u7lVBDBljKWFWjkgTa-ZvGQd3OHghSwp5Whj-gOyhALkCo0GZQ-bd=w408-h306-k-no"], tripAdvisor:"#", googleMaps:"#"},
+  {navn:"Havnebadet Fisketorvet", coords:[55.662722,12.563833], temp:"20°C", vand:"God", type:"urban", diving:true, lifeguard:true, toilet:true, changingRoom:true, pris:"gratis", beskrivelse:"5 minutter fra både Havneholmen og Dybbølsbro ligger Havnebadet Fisketorvet. Badeanstalten har en unik omgivelse fyldt med høje bygninger, samt selvfølgelig Fisketorvet lige ved siden af. Stedet er gratis, og der er livredder tilstede. Har både svømmebaner og børnebad, samt vipper", billeder:["https://i.imgur.com/7QWbSJV.jpeg","https://i.imgur.com/gyM7gAt.jpeg"], tripAdvisor:"https://www.tripadvisor.dk/Attraction_Review-g189541-d13169919-Reviews-Harbour_Bath_Fisketorvet-Copenhagen_Zealand.html", googleMaps:"https://www.google.com/maps/dir//Havnebadet+Fisketorvet,+Kalvebod+Brygge+55,+1560+K%C3%B8benhavn+V/@55.6626149,12.563786,18.08z/data=!4m17!1m7!3m6!1s0x4652536e27311393:0xcc873f444478c2df!2sHavnebadet+Fisketorvet!8m2!3d55.6626837!4d12.5635777!16s%2Fg%2F11c3zqzfj0!4m8!1m0!1m5!1m1!1s0x4652536e27311393:0xcc873f444478c2df!2m2!1d12.5635777!2d55.6626837!3e3?entry=ttu&g_ep=EgoyMDI1MDgzMC4wIKXMDSoASAFQAw%3D%3D"},
+  {navn:"Islands Brygge Havnebad", coords:[55.66862638741623, 12.577409626838188], temp:"21°C", vand:"God", type:"urban", diving:true, lifeguard:true, toilet:true, changingRoom:true, pris:"gratis", beskrivelse:"Strand og havnebad ved Bryggen.", billeder:["https://upload.wikimedia.org/wikipedia/commons/0/0e/Islands_Brygge_havnebad.jpg"], tripAdvisor:"https://www.tripadvisor.dk/Attraction_Review-g189541-d13169919-Reviews-Harbour_Bath_Fisketorvet-Copenhagen_Zealand.html", googleMaps:"#"},
+  {navn:"Kalvebod Bølge Badezone", coords:[55.668363639072965,12.57438032620695], temp:"20°C", vand:"Dårlig", type:"urban", diving:true, lifeguard:false, toilet:false, changingRoom:false, pris:"gratis", beskrivelse:"Moderne havnebad med bølgepool.", billeder:["https://lh3.googleusercontent.com/gps-cs-s/AC9h4noL9zJZAPHISZt21OpvCpwnQ6KM_VS4C1ZcUCMddjfjXA1ZNrrj6No1ZJj-7np7kuwit4GyP0yXiE3U1zlmt1xA71v-tDijEb39W21tmbSx7u1eL6Si8pO1Rv4w5LSyb2RcWEN5=w408-h306-k-no"], tripAdvisor:"#", googleMaps:"#"},
+  {navn:"Hvidovre Havnestrand", coords:[55.627406527266956, 12.502076177733393], temp:"20°C", vand:"Dårlig", type:"nature", diving:false, lifeguard:false, toilet:false, changingRoom:false, pris:"gratis", beskrivelse:"Hvidovre Havnestrand ligger 15 minutter fra Friheden Station, med S-tog linje A og buslinjer 4A, 200S, 139 og 137. Stranden er gratis og har kun sand, bænke, borde med grill og en lille bro med trappe. Bag stranden er en stor mark, og der er cykelstativer. Ingen livredder, men kajakker kan lejes 24/7, og børn og unge kan bruge gratis kajak hver mandag. Ishus med toilet kræver kode, og området er røgfrit. Stranden er ikke handicapvenlig.", billeder:["https://i.imgur.com/NXs9MEn.jpeg", "https://i.imgur.com/axAAaNj.jpeg"], tripAdvisor:"https://www.tripadvisor.dk/Attraction_Review-g1439382-d10536120-Reviews-Hvidovre_Havn-Hvidovre_Broendby_Municipality_Copenhagen_Region_Zealand.html", googleMaps:"https://www.google.com/maps/dir//Hvidovre+Strandpark,+2650+Hvidovre/@55.6272037,12.5035509,234m/data=!3m1!1e3!4m17!1m7!3m6!1s0x465254414a2ca2f3:0xbc647afe4d039b95!2sHvidovre+Strandpark!8m2!3d55.6274295!4d12.5021342!16s%2Fg%2F11fxw26k9_!4m8!1m0!1m5!1m1!1s0x465254414a2ca2f3:0xbc647afe4d039b95!2m2!1d12.5021342!2d55.6274295!3e3?entry=ttu&g_ep=EgoyMDI1MDgzMC4wIKXMDSoASAFQAw%3D%3D"}
+];
+
+let likedSpots=[];
+const markers=[];
+spots.forEach(spot=>{
+  let color = spot.vand==="God"?"#2ecc71":spot.vand==="Dårlig"?"#e74c3c":"#f39c12";
+  const marker = L.circleMarker(spot.coords,{radius:10,fillColor:color,color:"#003366",weight:2,opacity:1,fillOpacity:0.9});
+  const tempLabel = L.divIcon({className:'temp-label', html: spot.temp, iconAnchor:[-17,12]});
+  const tempMarker = L.marker(spot.coords,{icon:tempLabel, interactive:false});
+  marker.addTo(map);
+  tempMarker.addTo(map);
+  marker.on('click',()=>showInfo(spot));
+  markers.push({marker,tempMarker,spot});
+});
+
+let currentSort = null;
+
+// --- Update liked list with sorting (inkl. travlhed) ---
+function updateLikedList(sortBy=null){
+  if(sortBy!==null) currentSort=sortBy;
+  const list=document.getElementById("likedList");
+  list.innerHTML="";
+  let likedArray=likedSpots.map(name=>spots.find(s=>s.navn===name));
+
+  // --- Sortering inkl. travlhed ---
+  likedArray.forEach(s=>{
+    // Beregn nuværende travlhed
+    const now=new Date();
+    const dayIndex=now.getDay()===0?6:now.getDay()-1;
+    const maxPerDay=[100,40,90,30,80,95,25];
+    const dailyMax=maxPerDay[dayIndex];
+    let currentBusy=0;
+    const hour=now.getHours();
+    if(hour>=8 && hour<=22){
+      if(hour<12) currentBusy=Math.floor((hour-8+1)/4 * dailyMax*0.6 + Math.random()*5);
+      else if(hour<15) currentBusy=Math.floor(dailyMax*(0.8+Math.random()*0.2));
+      else currentBusy=Math.floor(dailyMax*(0.8-(hour-15)/7*0.8)+Math.random()*5);
+    }
+    s.currentBusy=currentBusy;
+  });
+
+  if(currentSort==="temp") likedArray.sort((a,b)=>parseInt(b.temp)-parseInt(a.temp));
+  else if(currentSort==="vand") likedArray.sort((a,b)=>({"God":1,"Dårlig":2}[a.vand]-{"God":1,"Dårlig":2}[b.vand]));
+  else if(currentSort==="travlhed") likedArray.sort((a,b)=>b.currentBusy-a.currentBusy);
+
+  likedArray.forEach(spot=>{
+    const li=document.createElement("li");
+    li.style.cursor="pointer";
+    li.style.marginBottom="5px";
+    li.textContent=`${spot.navn} (${spot.temp}) Aktuel travlhed: ${spot.currentBusy}%`;
+    if(spot.vand==="Dårlig"){ li.style.color="red"; li.textContent+= " ⚠️"; }
+    li.onclick=()=>{ map.setView(spot.coords,15); showInfo(spot); };
+    list.appendChild(li);
+  });
+}
+
+// --- Sorteringsdropdown inkl. travlhed ---
+const sortSelect=document.createElement("select");
+sortSelect.innerHTML=`
+  <option value="">Sorter efter</option>
+  <option value="temp">Temperatur</option>
+  <option value="vand">Vandkvalitet</option>
+  <option value="travlhed">Aktuel travlhed</option>
+`;
+sortSelect.onchange=()=>updateLikedList(sortSelect.value);
+document.getElementById("liked").prepend(sortSelect);
+
+updateLikedList();
+
+// --- Like funktion ---
+function toggleLike(spot){
+  const index=likedSpots.indexOf(spot.navn);
+  const likeBtn=document.getElementById("like-btn");
+  if(index===-1){
+    likedSpots.push(spot.navn);
+    likeBtn.textContent="♥";
+    likeBtn.classList.remove("pop"); void likeBtn.offsetWidth; likeBtn.classList.add("pop");
+    if(spot.vand==="Dårlig") alert(`Notifikation: Vandet på ${spot.navn} er dårligt!`);
+  } else {
+    likedSpots.splice(index,1);
+    likeBtn.textContent="♡";
+    likeBtn.classList.remove("pop"); void likeBtn.offsetWidth; likeBtn.classList.add("pop");
+  }
+  updateLikedList();
+}
+
+// --- Info sidebar & travlhed visning ---
+function showInfo(spot){
+  // --- Galleri, men skjul hvis ingen billeder ---
+  const galleryHtml = spot.billeder && spot.billeder.length > 0 
+    ? spot.billeder.map(img=>`
+        <img src="${img}" onclick="showOverlay('${img}')" 
+        style="width:100%; margin-bottom:5px; cursor:pointer; border-radius:5px;">
+      `).join("")
+    : "";
+
+  const infoSidebar = document.getElementById("infoSidebar");
+  infoSidebar.innerHTML = `
+    <div id="like-btn" style="text-align:center; font-size:30px; cursor:pointer;">
+      ${likedSpots.includes(spot.navn) ? "♥" : "♡"}
+    </div>
+    <h2 style="text-align:center; margin-top:5px;">${spot.navn}</h2>
+    <div class="description-box" style="padding:8px; border:1px solid #ccc; border-radius:5px; margin:5px 0;">
+      ${spot.beskrivelse}
+    </div>
+    <div class="links" style="margin-top:8px;">
+      <a id="tripAdvisorLink" href="#" target="_blank">TripAdvisor</a> | 
+      <a id="googleMapsLink" href="#" target="_blank">Google Maps</a>
+    </div>
+    <p><strong>Vandkvalitet:</strong> ${spot.vand}</p>
+    <p><strong>Temperatur:</strong> ${spot.temp}</p>
+    <p><strong>Vippe:</strong> ${spot.diving ? "Ja" : "Nej"}</p>
+    <p><strong>Livredder:</strong> ${spot.lifeguard ? "Ja" : "Nej"}</p>
+    <p><strong>Toilet:</strong> ${spot.toilet ? "Ja" : "Nej"}</p>
+    <p><strong>Omklædningslokaler:</strong> ${spot.changingRoom ? "Ja" : "Nej"}</p>
+    <p><strong>Pris:</strong> ${spot.pris === "gratis" ? "Gratis" : "Betalt"}</p>
+    <p><strong>Aktuel travlhed:</strong> <span id="currentBusy">0%</span></p>
+    ${galleryHtml ? `<div class="gallery">${galleryHtml}</div>` : ""}
+    <h3>Travlhedsindikator</h3>
+    <div id="daysContainer" style="font-size:16px;"></div>
+    <div id="hoursContainer" style="margin-top:10px; font-size:14px;"></div>
+  `;
+
+  document.getElementById("like-btn").onclick = () => toggleLike(spot);
+
+  if(spot.tripAdvisor) document.getElementById("tripAdvisorLink").href = spot.tripAdvisor;
+  if(spot.googleMaps) document.getElementById("googleMapsLink").href = spot.googleMaps;
+
+// --- Beregn travlhed med naturlig kurve ---
+const days = ["Mandag","Tirsdag","Onsdag","Torsdag","Fredag","Lørdag","Søndag"];
+const busyData = {};
+const baseTrend = Math.random()*30 + 35; // forskellig base travlhed per strand
+
+days.forEach((day,i)=>{
+  busyData[day] = [];
+  const dailyVariation = Math.random()*20 - 10; // lille variation per dag
+
+  for(let h=8; h<=22; h++){
+    let val = baseTrend + dailyVariation;
+
+    // Skab naturlig dagkurve: lav morgen, høj middag, faldende aften
+    if(h<12) val *= 0.4 + (h-8)/4*0.6;       // stiger fra 0.4 -> 1.0
+    else if(h<15) val *= 1;                  // topper midt på dagen
+    else val *= 1 - (h-15)/7*0.5;            // falder langsomt mod aften
+
+    val += Math.random()*5 - 2;              // lidt tilfældig variation
+    val = Math.min(100, Math.max(0, Math.round(val)));
+    busyData[day].push(val);
+  }
+});
+
+const now = new Date();
+const dayIndex = now.getDay() === 0 ? 6 : now.getDay()-1;
+const hour = now.getHours();
+const today = days[dayIndex];
+const currentBusy = hour>=8 && hour<=22 ? busyData[today][hour-8] : 0;
+document.getElementById("currentBusy").textContent = `${currentBusy}%`;
+
+
+// --- Flot bar-visning med glidende procent ---
+const daysContainer = document.getElementById("daysContainer");
+daysContainer.innerHTML = days.map(day=>{
+  const avg = Math.floor(busyData[day].reduce((a,b)=>a+b,0)/busyData[day].length);
+  return `
+    <div class="day-bar" data-day="${day}" style="display:flex; align-items:center; margin-bottom:8px; cursor:pointer;">
+      <span style="width:80px; font-weight:bold;">${day}</span>
+      <div style="
+        flex:1;
+        height:20px;
+        border-radius:12px;
+        background: linear-gradient(to right, #2ecc71, #f1c40f, #e74c3c);
+        position:relative;
+        overflow:hidden;">
+        <div class="fill-bar" style="
+          width:0;
+          height:100%;
+          border-radius:12px;
+          display:flex;
+          justify-content:flex-end;
+          align-items:center;
+          padding-right:5px;
+          font-size:12px;
+          font-weight:bold;
+          color:black;
+          transition: width 1s ease-in-out;
+        ">
+          <span class="percent-text" style="
+            background: rgba(255,255,255,0.5);
+            padding:1px 4px;
+            border-radius:4px;
+          ">${avg}%</span>
+        </div>
+      </div>
+    </div>`;
+}).join("");
+
+// --- Animate bars ---
+document.querySelectorAll(".day-bar .fill-bar").forEach((barDiv,i)=>{
+  const day = days[i];
+  const avg = Math.floor(busyData[day].reduce((a,b)=>a+b,0)/busyData[day].length);
+  setTimeout(()=>{
+    barDiv.style.width = avg + "%";
+  }, 50);
+});
+
+
+
+// --- Klik på dag for timevisning med grøn->rød ---
+document.querySelectorAll(".day-bar").forEach(bar=>{
+  bar.onclick = ()=>{
+    const day = bar.dataset.day;
+    const hoursHtml = busyData[day].map((val,h)=>{
+      // Beregn farve fra grøn til rød
+      const green = Math.max(0, 255 - Math.floor(val*2.55));
+      const red = Math.min(255, Math.floor(val*2.55));
+      const color = `rgb(${red},${green},0)`;
+
+      return `
+        <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:4px;">
+          <span>${h+8}:00</span>
+          <span style="color:${color}; font-weight:bold">${val}%</span>
+        </div>`;
+    }).join("");
+    document.getElementById("hoursContainer").innerHTML = `<h4>${day}</h4>${hoursHtml}`;
+  };
+});
+
+}
+
+
+// --- Overlay ---
+function showOverlay(imgSrc){
+  let overlay=document.getElementById("imgOverlay");
+  if(!overlay){
+    overlay=document.createElement("div");
+    overlay.id="imgOverlay";
+    overlay.style.position="fixed";
+    overlay.style.top=0;
+    overlay.style.left=0;
+    overlay.style.width="100%";
+    overlay.style.height="100%";
+    overlay.style.background="rgba(0,0,0,0.8)";
+    overlay.style.display="flex";
+    overlay.style.alignItems="center";
+    overlay.style.justifyContent="center";
+    overlay.style.zIndex=9999;
+    overlay.onclick=()=>overlay.remove();
+    const img=document.createElement("img");
+    img.id="overlayImg";
+    img.style.maxWidth="90%";
+    img.style.maxHeight="90%";
+    overlay.appendChild(img);
+    document.body.appendChild(overlay);
+  }
+  document.getElementById("overlayImg").src=imgSrc;
+  overlay.style.display="flex";
+}
+
+// --- Filtre ---
+const activeFilters = {
+  type: null,
+  diving: null,
+  lifeguard: null,
+  toilet: null,
+  price: null,
+  changingRoom: null
+};
+
+document.querySelectorAll(".filter-btn.group").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const group = btn.dataset.group;
+    const value = btn.dataset.value;
+
+    // Hvis allerede valgt -> fjern
+    if (activeFilters[group] === (value === "true" ? true : value === "false" ? false : value)) {
+      activeFilters[group] = null;
+      btn.classList.remove("active");
+    } else {
+      // Fjern aktiv klasse fra alle i gruppen
+      document.querySelectorAll(`.filter-btn.group[data-group="${group}"]`).forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      // Gem filterværdi korrekt
+      if (value === "true") activeFilters[group] = true;
+      else if (value === "false") activeFilters[group] = false;
+      else activeFilters[group] = value; // fx "gratis"/"betalt" for pris
+    }
+
+    updateMarkers();
+  });
+});
+
+function updateMarkers() {
+  markers.forEach(({ marker, tempMarker, spot }) => {
+    map.removeLayer(marker);
+    map.removeLayer(tempMarker);
+
+    let show = true;
+    for (const group in activeFilters) {
+      if (activeFilters[group] !== null) {
+        if (group === "price") {
+          // Rigtigt felt er spot.pris
+          if (spot.pris !== activeFilters[group]) show = false;
+        } else if (spot[group] !== activeFilters[group]) {
+          show = false;
+        }
+      }
+    }
+
+    if (show) {
+      marker.addTo(map);
+      tempMarker.addTo(map);
+    }
+  });
+}
+
+// --- Tabs ---
+document.querySelectorAll(".tab-btn").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(c=>c.style.display="none");
+    btn.classList.add("active");
+    document.getElementById(btn.dataset.tab).style.display="block";
+  });
+});
+</script>
+</body>
+</html>
